@@ -1,0 +1,21 @@
+---
+- hosts: all
+  become: true
+  
+  pre_tasks:
+    - name: Load config
+      ansible.builtin.include_vars: config.yaml
+        
+  tasks:
+  - name: Print all available facts
+    ansible.builtin.debug:
+      var: compose_version
+  - name: Setup qemu-guest-agent
+    ansible.builtin.import_tasks: tasks/qemu.yaml
+  - name: Make syslog ephemeral
+    ansible.builtin.import_tasks: tasks/syslog.yaml
+    when: disable_syslog == True
+  - name: Install docker
+    ansible.builtin.import_tasks: tasks/docker.yaml
+  - name: Setup unifi controller
+    ansible.builtin.import_tasks: tasks/unifi.yaml

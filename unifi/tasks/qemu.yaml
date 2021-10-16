@@ -1,0 +1,10 @@
+---
+- name: Install qemu-agent
+  ansible.builtin.apt:
+    update_cache: true
+    name: qemu-guest-agent
+    state: present
+- name: Start qemu-agent
+  ansible.builtin.systemd:
+    state: started
+    name: qemu-guest-agent

@@ -1,0 +1,9 @@
+---
+unifi_user: debian
+disable_syslog: false
+compose_version: 2.0.1
+unifi:
+  version: 6.4.54
+  memory: 512M
+  timezone: UTC
+  

@@ -1,0 +1,20 @@
+---
+- name: Setup unifi dir
+  ansible.builtin.file:
+    state: directory
+    path: /home/{{ unifi_user }}/unifi
+    owner: "{{ unifi_user }}"
+    group: "{{ unifi_user }}"
+  become: false
+- name: Setup container files
+  ansible.builtin.template:
+    src: templates/docker-compose.yaml.j2
+    dest: /home/{{ unifi_user }}/unifi/docker-compose.yaml
+    mode: 0644
+  become: false
+  register: unifi_compose
+- name: (Re)start controller
+  ansible.builtin.command:
+    chdir: /home/{{ unifi_user }}/unifi
+    cmd: /usr/local/bin/docker-compose up -d
+  when: unifi_compose.changed
