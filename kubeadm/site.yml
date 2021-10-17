@@ -1,0 +1,58 @@
+---
+- hosts: cluster
+  gather_facts: yes
+  become: yes
+  tasks:
+    - name: "Install containerd"
+      include_role:
+        name: containerd
+      tags: containerd
+
+    - name: "Install iscsi tools"
+      include_role:
+        name: iscsi
+      when: "additional_features.iscsi"
+      tags: iscsi
+
+    - name: "Install nfs tools"
+      include_role:
+        name: nfs
+      when: "additional_features.nfs"
+      tags: nfs
+
+    - name: "Install qemu-guest-agent"
+      include_role:
+        name: qemu-guest-agent
+      when: "additional_features.qemu_guest_agent"
+      tags: qemu-guest-agent
+
+- hosts: master
+  gather_facts: yes
+  become: yes
+  roles:
+    - { role: kubernetes/master, tags: master }
+    - { role: cni, tags: cni }
+
+- hosts: node
+  gather_facts: yes
+  become: yes
+  roles:
+    - { role: kubernetes/node, tags: node }
+
+- hosts: master
+  gather_facts: yes
+  become: yes
+  tasks:
+    - name: "MetalLB role"
+      include_role:
+        name: metallb
+      when: "additional_features.metallb"
+      run_once: yes
+      tags: metallb
+
+    - name: "Healthcheck role"
+      include_role:
+        name: healthcheck
+      when: "additional_features.healthcheck"
+      run_once: yes
+      tags: healthcheck

@@ -1,0 +1,70 @@
+---
+- name: Install iscsi
+  ansible.builtin.apt:
+    name:
+      - open-iscsi
+      - lsscsi
+      - sg3-utils
+      - multipath-tools
+      - scsitools
+    state: present
+    update_cache: yes
+  when: ansible_os_family == "Debian"
+
+- name: Configure multipath
+  ansible.builtin.template:
+    src: "multipath.conf.j2"
+    dest: "/etc/multipath.conf"
+    mode: 0644
+  register: multipath
+  when: ansible_os_family == "Debian"
+
+- name: Restart multipath
+  ansible.builtin.systemd:
+    state: restarted
+    name: multipath-tools
+  when: (ansible_os_family == "Debian" and multipath.changed)
+
+- name: Start multipath
+  ansible.builtin.systemd:
+    state: started
+    enabled: true
+    name: multipath-tools
+  when: ansible_os_family == "Debian"
+
+- name: Start open-iscsi
+  ansible.builtin.systemd:
+    state: started
+    enabled: true
+    name: open-iscsi
+  when: ansible_os_family == "Debian"
+
+- name: Install iscsi
+  ansible.builtin.yum:
+    name:
+      - lsscsi
+      - iscsi-initiator-utils
+      - sg3_utils
+      - device-mapper-multipath
+    state: present
+    update_cache: yes
+  when: ansible_os_family == "RedHat"
+
+- name: Configure multipath-tools
+  ansible.builtin.command:
+    cmd: mpathconf --enable --with_multipathd y
+  when: ansible_os_family == "RedHat"
+
+- name: Start multipath
+  ansible.builtin.systemd:
+    state: started
+    enabled: true
+    name: multipathd
+  when: ansible_os_family == "RedHat"
+
+- name: Start open-iscsi
+  ansible.builtin.systemd:
+    state: started
+    enabled: true
+    name: iscsi
+  when: ansible_os_family == "RedHat"

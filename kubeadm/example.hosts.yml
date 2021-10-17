@@ -1,0 +1,13 @@
+all:
+  children:
+    master:
+      hosts:
+        master:
+    node:
+      hosts:
+        node1:
+        node2:
+    cluster:
+      children:
+        master:
+        node:

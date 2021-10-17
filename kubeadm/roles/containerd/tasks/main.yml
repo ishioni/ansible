@@ -1,0 +1,80 @@
+---
+# - name: Install containerd engine
+#   include_tasks: pkg.yml
+
+- name: Install containerd
+  when: ansible_os_family == "Debian"
+  apt:
+    name: "containerd"
+    state: present
+    update_cache: yes
+
+- name: Ensure containerd configdir
+  when: ansible_os_family == "Debian"
+  ansible.builtin.file:
+    state: directory
+    path: /etc/containerd
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Configure containerd.toml
+  ansible.builtin.template:
+    src: "config.toml.j2"
+    dest: /etc/containerd/config.toml
+    owner: root
+    group: root
+    mode: 0644
+  register: configtoml
+
+- name: Restart containerd
+  ansible.builtin.systemd:
+    state: restarted
+    name: systemd-journald
+  when: configtoml.changed
+
+- name: Enable containerd
+  ansible.builtin.systemd:
+    state: started
+    enabled: true
+    name: containerd
+  register: started_containerd
+
+# - name: Add Docker yum repository
+#   when: ansible_os_family == "RedHat"
+#   yum_repository:
+#     name: Docker
+#     description: Docker Repository
+#     file: docker
+#     baseurl: https://download.docker.com/linux/centos/7/x86_64/stable/
+#     enabled: yes
+#     gpgcheck: yes
+#     gpgkey: https://download.docker.com/linux/centos/gpg
+#
+# - name: Install docker engine (RHEL/CentOS)
+#   when: ansible_os_family == "RedHat"
+#   yum:
+#     name: "docker-ce-selinux-{{ docker_version }}.*"
+#     state: present
+#   register: docker_installed
+#
+# - name: Copy Docker environment config file
+#   template: src=docker.j2 dest={{ system_env_dir }}/docker
+#   when: docker_installed
+
+# - name: Add any insecure registries to Docker config
+#   when: docker_installed and insecure_registries is defined and insecure_registries | length > 0
+#   lineinfile: dest={{ system_env_dir }}/docker regexp=^INSECURE_REGISTRY= line=INSECURE_REGISTRY="{% for reg in insecure_registries %}--insecure-registry={{ reg }} {% endfor %}"
+#
+# - name: Add registry to Docker config
+#   when: docker_installed and add_registry is defined and add_registry > 0
+#   lineinfile: dest={{ system_env_dir }}/docker regexp=^ADD_REGISTRY= line=ADD_REGISTRY="{% for reg in add_registry %}--add-registry={{ reg }} {%endfor %}"
+#
+# - name: Enable and check Docker service
+#   systemd:
+#     name: docker
+#     daemon_reload: yes
+#     state: started
+#     enabled: yes
+#   register: started_docker
+#   when: docker_installed

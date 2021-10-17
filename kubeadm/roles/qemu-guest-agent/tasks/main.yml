@@ -1,0 +1,12 @@
+---
+- name: Install qemu-guest-agent
+  ansible.builtin.apt:
+    update_cache: true
+    name: "qemu-guest-agent"
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: Start qemu-guest-agent
+  ansible.builtin.systemd:
+    state: started
+    name: qemu-guest-agent
